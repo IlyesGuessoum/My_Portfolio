@@ -1,3 +1,6 @@
+
+import { Particle } from '../types';
+
 // Utility to draw the background and environmental elements
 
 export const drawSky = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
@@ -116,6 +119,39 @@ export const drawGround = (ctx: CanvasRenderingContext2D, cameraX: number, width
   }
 };
 
+export const drawParticles = (ctx: CanvasRenderingContext2D, particles: Particle[], cameraX: number) => {
+  ctx.save();
+  // Additive blending makes overlapping particles glow intensely (Neon effect)
+  ctx.globalCompositeOperation = 'lighter';
+  
+  particles.forEach(p => {
+    const screenX = p.x - cameraX;
+    
+    // Only draw if on screen
+    if (screenX > -20 && screenX < ctx.canvas.width + 20) {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      
+      // Dynamic Shadow for glow
+      ctx.shadowBlur = p.color === '#334155' ? 0 : 15; // No glow for smoke, high glow for energy
+      ctx.shadowColor = p.color;
+      
+      // Draw Logic: Mix of Squares and Glitch Lines
+      if (p.color === '#22d3ee' || p.color === '#eab308') {
+          // Glitch / Spark style (Stretched horizontally for speed)
+          const width = p.size * (Math.random() > 0.5 ? 2.5 : 1);
+          const height = p.size * 0.6;
+          ctx.fillRect(screenX, p.y, width, height);
+      } else {
+          // Smoke / Dust style (Square/Blocky)
+          ctx.fillRect(screenX - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      }
+    }
+  });
+  
+  ctx.restore();
+};
+
 export const drawPlayer = (
   ctx: CanvasRenderingContext2D, 
   x: number, 
@@ -126,434 +162,613 @@ export const drawPlayer = (
   isMoving: boolean,
   time: number
 ) => {
-  // Beautiful Humanoid Robot Design
+  // === THE CYBER-RONIN ===
+  // A futuristic Samurai with dark armor, gold accents, and a flowing digital coat.
+  
   ctx.save();
   ctx.translate(x + width / 2, y + height / 2);
   
-  // Scale everything based on a base height of 100px.
-  // If height is 160, scale will be 1.6
-  const baseHeight = 100;
+  const baseHeight = 110;
   const scale = height / baseHeight;
-  ctx.scale(direction * scale, scale); // Face direction and Scale up
-
-  const colorBody = '#e2e8f0'; // Slate 200
-  const colorDark = '#1e293b'; // Slate 800
-  const colorAccent = '#06b6d4'; // Cyan 500
-  const colorSkin = '#94a3b8'; // Metallic skin tone
+  ctx.scale(direction * scale, scale);
 
   // Animation Variables
-  const bob = isMoving ? Math.sin(time * 0.02) * 3 : Math.sin(time * 0.005) * 2;
-  const walk = isMoving ? time * 0.015 : 0;
+  const t = time * 0.005;
+  const breath = Math.sin(t) * 1;
+  const runCycle = isMoving ? Math.sin(t * 3) : 0;
   
-  const leftLegAngle = isMoving ? Math.sin(walk) * 0.6 : 0;
-  const rightLegAngle = isMoving ? Math.sin(walk + Math.PI) * 0.6 : 0;
-  const leftArmAngle = isMoving ? Math.sin(walk + Math.PI) * 0.6 : Math.sin(time * 0.003) * 0.05;
-  const rightArmAngle = isMoving ? Math.sin(walk) * 0.6 : -Math.sin(time * 0.003) * 0.05;
+  // Colors
+  const cArmor = '#0f172a'; // Slate 900 (Dark Armor)
+  const cGold = '#eab308'; // Yellow 500 (Gold Trim)
+  const cCloth = '#334155'; // Slate 700 (Coat)
+  const cNeon = '#ef4444'; // Red Neon (Visor/Accents)
+  const cBlade = '#22d3ee'; // Cyan (Katana)
 
-  // Helper for drawing rounded rectangles (manual path for compatibility)
-  const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+  // Lean forward when running
+  if (isMoving) {
+      ctx.rotate(0.2); 
+      ctx.translate(0, 5);
+  }
+
+  // 1. THE DIGITAL HAORI (Coat) - Behind body
+  // Flows violently when running, gently when idle
+  ctx.save();
+  ctx.translate(-5, -35); // Shoulder anchor
+  
+  // Draw multiple strips of cloth
+  for (let i = 0; i < 4; i++) {
+    const lag = i * 0.3;
+    const flow = isMoving 
+        ? Math.sin(t * 3 - lag) * 15 + 20 // Violent flow back
+        : Math.sin(t - lag) * 5; // Gentle sway
+    
+    const len = 60 + i * 5;
+
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  };
+    ctx.moveTo(0, 0);
+    // Control points for bezier cloth
+    ctx.bezierCurveTo(
+        -20 - flow, 20, 
+        -30 - flow, 40, 
+        -40 - flow * 1.5, len
+    );
+    
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = cCloth;
+    ctx.lineCap = 'butt';
+    ctx.stroke();
 
-  // --- Back Limbs (Right side relative to character facing right) ---
+    // Digital "glitch" tip
+    ctx.fillStyle = cGold;
+    ctx.beginPath();
+    ctx.arc(-40 - flow * 1.5, len, 2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 2. LEGS (Hakama style pants + Greaves)
+  ctx.save();
+  ctx.translate(0, 10);
   
   // Back Leg
   ctx.save();
-  ctx.translate(-5, 15 + bob); // Hip pivot
-  ctx.rotate(rightLegAngle);
-  ctx.fillStyle = colorDark;
-  roundRect(ctx, -6, 0, 12, 25, 5); // Thigh
-  ctx.fill();
-    // Shin
-    ctx.translate(0, 22);
-    ctx.rotate(isMoving ? Math.max(0, Math.sin(walk + Math.PI)) * 0.5 : 0); // Knee bend
-    ctx.fillStyle = colorBody;
-    roundRect(ctx, -5, 0, 10, 25, 4);
-    ctx.fill();
-    // Foot
-    ctx.fillStyle = colorDark;
-    ctx.beginPath();
-    ctx.moveTo(-5, 22);
-    ctx.lineTo(5, 22);
-    ctx.lineTo(7, 30);
-    ctx.lineTo(-7, 30);
-    ctx.fill();
+  const backLegAngle = isMoving ? Math.sin(t * 3 + Math.PI) * 0.8 : 0.1;
+  ctx.rotate(backLegAngle);
+  ctx.translate(0, 15);
+  // Thigh (Hakama)
+  ctx.fillStyle = '#1e293b'; 
+  ctx.beginPath(); ctx.moveTo(-6, -15); ctx.lineTo(6, -15); ctx.lineTo(8, 10); ctx.lineTo(-8, 10); ctx.fill();
+  // Greave (Armor)
+  ctx.fillStyle = cArmor;
+  ctx.fillRect(-5, 10, 10, 15);
+  ctx.strokeStyle = cGold; ctx.lineWidth = 1; ctx.strokeRect(-5, 10, 10, 15);
+  // Boot
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.moveTo(-5, 25); ctx.lineTo(8, 25); ctx.lineTo(8, 28); ctx.lineTo(-6, 28); ctx.fill();
   ctx.restore();
-
-  // Back Arm
-  ctx.save();
-  ctx.translate(-8, -25 + bob); // Shoulder pivot
-  ctx.rotate(rightArmAngle);
-  ctx.fillStyle = colorDark;
-  roundRect(ctx, -4, 0, 8, 20, 4); // Upper arm
-  ctx.fill();
-    // Forearm
-    ctx.translate(0, 18);
-    ctx.rotate(-0.2); // Natural bend
-    ctx.fillStyle = colorSkin;
-    roundRect(ctx, -3, 0, 6, 20, 3);
-    ctx.fill();
-    // Hand
-    ctx.fillStyle = colorBody;
-    ctx.beginPath();
-    ctx.arc(0, 22, 5, 0, Math.PI * 2);
-    ctx.fill();
-  ctx.restore();
-
-  // --- Body ---
-  ctx.save();
-  ctx.translate(0, bob);
-  
-  // Torso
-  ctx.fillStyle = colorBody;
-  ctx.beginPath();
-  // Sleek Android shape
-  ctx.moveTo(-12, -35); // Left shoulder
-  ctx.lineTo(12, -35); // Right shoulder
-  ctx.lineTo(8, 0); // Waist right
-  ctx.lineTo(14, 15); // Hip right
-  ctx.lineTo(-14, 15); // Hip left
-  ctx.lineTo(-8, 0); // Waist left
-  ctx.closePath();
-  ctx.fill();
-
-  // Core / Chest Plate
-  ctx.fillStyle = colorAccent;
-  ctx.shadowColor = colorAccent;
-  ctx.shadowBlur = 12;
-  ctx.beginPath();
-  ctx.arc(0, -20, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  // Neck
-  ctx.fillStyle = colorDark;
-  ctx.fillRect(-3, -40, 6, 8);
-
-  // Head
-  ctx.translate(0, -42);
-  ctx.rotate(0.05); // Tilt head slightly forward
-  
-  // Helmet
-  ctx.fillStyle = colorBody;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 14, 16, 0, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Visor
-  ctx.fillStyle = '#0f172a';
-  ctx.beginPath();
-  ctx.roundRect(0, -6, 13, 10, 4); // Visor on the "front" of the face
-  ctx.fill();
-  
-  // Eye Glow
-  ctx.fillStyle = colorAccent;
-  ctx.shadowColor = colorAccent;
-  ctx.shadowBlur = 15;
-  ctx.beginPath();
-  ctx.arc(8, -2, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Ear detail
-  ctx.fillStyle = colorDark;
-  ctx.fillRect(-6, -6, 4, 12);
-
-  ctx.restore(); // End Body Context
-
-  // --- Front Limbs (Left side) ---
 
   // Front Leg
   ctx.save();
-  ctx.translate(5, 15 + bob); // Hip pivot
-  ctx.rotate(leftLegAngle);
-  ctx.fillStyle = colorBody; 
-  roundRect(ctx, -7, 0, 14, 25, 6); // Thigh
+  const frontLegAngle = isMoving ? Math.sin(t * 3) * 0.8 : -0.1;
+  ctx.rotate(frontLegAngle);
+  ctx.translate(0, 15);
+  // Thigh
+  ctx.fillStyle = '#1e293b'; 
+  ctx.beginPath(); ctx.moveTo(-6, -15); ctx.lineTo(6, -15); ctx.lineTo(8, 10); ctx.lineTo(-8, 10); ctx.fill();
+  // Greave
+  ctx.fillStyle = cArmor;
+  ctx.fillRect(-5, 10, 10, 15);
+  ctx.strokeStyle = cGold; ctx.lineWidth = 1; ctx.strokeRect(-5, 10, 10, 15);
+  // Boot
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.moveTo(-5, 25); ctx.lineTo(8, 25); ctx.lineTo(8, 28); ctx.lineTo(-6, 28); ctx.fill();
+  ctx.restore();
+
+  ctx.restore(); // End Legs
+
+  // 3. TORSO (Armor Plate)
+  ctx.save();
+  ctx.translate(0, -10 + breath);
+  
+  // Body armor shape
+  ctx.fillStyle = cArmor;
+  ctx.beginPath();
+  ctx.moveTo(-12, -25); // Shoulder L
+  ctx.lineTo(12, -25);  // Shoulder R
+  ctx.lineTo(10, 15);   // Waist R
+  ctx.lineTo(-10, 15);  // Waist L
   ctx.fill();
-    // Shin
-    ctx.translate(0, 22);
-    ctx.rotate(isMoving ? Math.max(0, Math.sin(walk)) * 0.5 : 0);
-    ctx.fillStyle = '#f1f5f9';
-    roundRect(ctx, -6, 0, 12, 28, 5);
-    ctx.fill();
-    // Boot
-    ctx.fillStyle = colorDark;
-    ctx.beginPath();
-    ctx.moveTo(-6, 25);
-    ctx.lineTo(6, 25);
-    ctx.lineTo(8, 32);
-    ctx.lineTo(-8, 32);
-    ctx.fill();
-    // Boot light
-    ctx.fillStyle = colorAccent;
-    ctx.fillRect(-8, 30, 16, 2);
+  
+  // Gold Trim
+  ctx.strokeStyle = cGold;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-12, -25); ctx.lineTo(-5, 15);
+  ctx.moveTo(12, -25); ctx.lineTo(5, 15);
+  ctx.stroke();
+
+  // Reactor/Symbol on chest
+  ctx.fillStyle = cNeon;
+  ctx.shadowColor = cNeon;
+  ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(0, -5, 3, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // 4. ARMS
+  // Back Arm (Holding Sheath or Swinging)
+  ctx.save();
+  ctx.translate(-12, -20);
+  ctx.rotate(isMoving ? -runCycle : 0.1);
+  ctx.fillStyle = '#334155'; // Undersuit
+  ctx.fillRect(-3, 0, 6, 12); // Upper
+  ctx.fillStyle = cArmor; // Gauntlet
+  ctx.fillRect(-4, 12, 8, 12);
+  ctx.restore();
+
+  // 5. KATANA (On Back)
+  ctx.save();
+  ctx.rotate(-0.5); // Tilt
+  ctx.translate(5, -15);
+  // Sheath
+  ctx.fillStyle = '#111';
+  ctx.fillRect(-2, -30, 4, 50);
+  // Handle
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-2, -40, 4, 10);
+  // Tsuba (Guard) - Gold
+  ctx.fillStyle = cGold;
+  ctx.fillRect(-4, -30, 8, 2);
   ctx.restore();
 
   // Front Arm
   ctx.save();
-  ctx.translate(10, -25 + bob); // Shoulder pivot
-  ctx.rotate(leftArmAngle);
-  ctx.fillStyle = colorBody;
-  roundRect(ctx, -5, 0, 10, 22, 5); // Upper arm
-  ctx.fill();
-    // Forearm
-    ctx.translate(0, 20);
-    ctx.rotate(-0.1); 
-    ctx.fillStyle = '#f8fafc';
-    roundRect(ctx, -4, 0, 8, 22, 4);
-    ctx.fill();
-    // Hand
-    ctx.fillStyle = colorDark;
-    ctx.beginPath();
-    ctx.arc(0, 24, 6, 0, Math.PI * 2);
-    ctx.fill();
+  ctx.translate(12, -20);
+  ctx.rotate(isMoving ? runCycle : -0.1);
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(-3, 0, 6, 12);
+  ctx.fillStyle = cArmor; // Gauntlet
+  ctx.fillRect(-4, 12, 8, 12);
+  ctx.strokeStyle = cGold;
+  ctx.strokeRect(-4, 12, 8, 12);
   ctx.restore();
 
-  ctx.restore();
+  // 6. HEAD (Kabuto Helmet)
+  ctx.translate(0, -28);
+  
+  // Helmet Base
+  ctx.fillStyle = cArmor;
+  ctx.beginPath();
+  ctx.moveTo(-9, -10);
+  ctx.quadraticCurveTo(0, -15, 9, -10); // Top dome
+  ctx.lineTo(10, 5);
+  ctx.lineTo(0, 10); // Chin
+  ctx.lineTo(-10, 5);
+  ctx.fill();
+
+  // Visor (The Cyber Eye)
+  ctx.strokeStyle = cNeon;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = cNeon;
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.moveTo(-6, -2);
+  ctx.lineTo(6, -2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Horns (Kuwarigata) - Gold
+  ctx.fillStyle = cGold;
+  ctx.beginPath();
+  ctx.moveTo(-10, -5); ctx.lineTo(-15, -20); ctx.lineTo(-8, -10); // L
+  ctx.moveTo(10, -5); ctx.lineTo(15, -20); ctx.lineTo(8, -10); // R
+  ctx.fill();
+
+  ctx.restore(); // End Head & Torso
+  ctx.restore(); // End Player
 };
 
 export const drawZoneObject = (ctx: CanvasRenderingContext2D, zoneType: string, x: number, y: number, screenX: number, time: number) => {
-  const floatY = Math.sin(time * 0.005) * 15;
-  const s = 2.5; // Scale factor (increased slightly for better visibility)
+  const floatY = Math.sin(time * 0.005) * 10;
+  const s = 2.5; // Scale factor
   
   ctx.save();
   ctx.translate(screenX, y + floatY);
   
-  // Draw base (Shadow/Platform)
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  // Shadow for all buildings
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.beginPath();
-  // Keep Y offset moderate so it stays within ground bar roughly
-  ctx.ellipse(0, 40, 80, 20, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 45, 100, 20, 0, 0, Math.PI * 2);
   ctx.fill();
 
   if (zoneType === 'welcome') {
-    // === HOLOGRAPHIC GUIDE HAND ===
-    const scaleHand = 3.5;
-    
-    // Animation for pointing motion
-    const pointOffset = Math.sin(time * 0.008) * 15; // Move left-right
-    
+     const scaleHand = 3.5;
+    const pointOffset = Math.sin(time * 0.008) * 15;
     ctx.save();
-    ctx.translate(0, -60 * s); // Lift up
-    
-    // 1. Draw Directional Chevrons (Arrows behind hand)
-    // Three arrows fading and moving right
+    ctx.translate(0, -60 * s);
     for (let i = 0; i < 3; i++) {
-        const offset = (time * 0.05 + i * 20) % 60; // Loop 0 to 60
-        const opacity = Math.max(0, 1 - (offset / 50)); // Fade out as it moves
-        
-        ctx.strokeStyle = `rgba(34, 211, 238, ${opacity})`; // Cyan glow
+        const offset = (time * 0.05 + i * 20) % 60;
+        const opacity = Math.max(0, 1 - (offset / 50));
+        ctx.strokeStyle = `rgba(34, 211, 238, ${opacity})`;
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.shadowBlur = 10 * opacity;
         ctx.shadowColor = '#22d3ee';
-        
         ctx.beginPath();
-        // Draw Chevron Shape >
-        const chevronX = -120 + offset * 1.5; // Start left
+        const chevronX = -120 + offset * 1.5;
         ctx.moveTo(chevronX, -20);
         ctx.lineTo(chevronX + 20, 0);
         ctx.lineTo(chevronX, 20);
         ctx.stroke();
     }
-
-    // 2. Draw The Robotic Hand
-    ctx.translate(pointOffset - 20, 0); // Apply pointing animation
-    
-    // Gradient for Hologram look
+    ctx.translate(pointOffset - 20, 0);
     const grad = ctx.createLinearGradient(-40, 0, 40, 0);
     grad.addColorStop(0, 'rgba(6, 182, 212, 0.2)');
-    grad.addColorStop(0.5, 'rgba(34, 211, 238, 0.9)'); // Bright Cyan center
+    grad.addColorStop(0.5, 'rgba(34, 211, 238, 0.9)');
     grad.addColorStop(1, 'rgba(6, 182, 212, 0.2)');
-    
     ctx.fillStyle = grad;
     ctx.shadowBlur = 20;
     ctx.shadowColor = '#22d3ee';
     ctx.strokeStyle = '#cffafe';
     ctx.lineWidth = 2;
-
-    // Hand Shape (Stylized pointing finger)
     ctx.beginPath();
-    // Wrist
     ctx.moveTo(-50, -15);
     ctx.lineTo(-20, -20);
-    // Pointing Finger Top
     ctx.lineTo(40, -10); 
-    // Finger Tip
     ctx.quadraticCurveTo(50, 0, 40, 10);
-    // Finger Bottom
     ctx.lineTo(-20, 20);
-    // Wrist Bottom
     ctx.lineTo(-50, 15);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-
-    // Tech details on hand
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.arc(-20, 0, 5, 0, Math.PI * 2); // Knuckle node
+    ctx.arc(-20, 0, 5, 0, Math.PI * 2);
     ctx.fill();
-    
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(30, 0); // Circuit line
+    ctx.lineTo(30, 0);
     ctx.strokeStyle = 'rgba(255,255,255,0.7)';
     ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+  } else if (zoneType === 'about') {
+    // ... (Futuristic Home Base Code - Keep unchanged) ...
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.moveTo(-40 * s, 0); ctx.lineTo(-50 * s, 30 * s); ctx.lineTo(-40 * s, 30 * s); ctx.lineTo(-30 * s, 0); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(40 * s, 0); ctx.lineTo(50 * s, 30 * s); ctx.lineTo(40 * s, 30 * s); ctx.lineTo(30 * s, 0); ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.roundRect(-60 * s, -70 * s, 120 * s, 70 * s, 10 * s);
+    ctx.fill();
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#22d3ee';
+    ctx.stroke();
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-15 * s, -45 * s, 30 * s, 45 * s);
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, -45 * s); ctx.lineTo(0, 0); ctx.stroke();
+    ctx.strokeStyle = '#38bdf8';
+    ctx.strokeRect(-15 * s, -45 * s, 30 * s, 45 * s);
+    const winColor = '#fef08a';
+    ctx.fillStyle = winColor;
+    ctx.shadowColor = winColor;
+    ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(-35 * s, -35 * s, 8 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(35 * s, -35 * s, 8 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(-10 * s, -80 * s, 20 * s, 10 * s);
+    const dishAngle = Math.sin(time * 0.002) * 0.4;
+    ctx.save();
+    ctx.translate(0, -80 * s);
+    ctx.rotate(dishAngle);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -10 * s); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, -15 * s, 12 * s, 0.2 * Math.PI, 0.8 * Math.PI, true); ctx.fillStyle = '#cbd5e1'; ctx.fill();
+    ctx.restore();
+    const pulse = Math.sin(time * 0.005);
+    ctx.save();
+    ctx.translate(0, -130 * s + (pulse * 5));
+    const boxW = 140 * s; const boxH = 50 * s;
+    ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
+    ctx.fillRect(-boxW/2, -boxH/2, boxW, boxH);
+    ctx.save(); ctx.beginPath(); ctx.rect(-boxW/2, -boxH/2, boxW, boxH); ctx.clip();
+    const scanY = (time * 0.05) % boxH - boxH/2;
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.2)'; ctx.fillRect(-boxW/2, scanY, boxW, 5); ctx.restore();
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)'; ctx.lineWidth = 2; ctx.strokeRect(-boxW/2, -boxH/2, boxW, boxH);
+    ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 3; const cw = 10; const ch = 10;
+    ctx.beginPath(); ctx.moveTo(-boxW/2, -boxH/2 + ch); ctx.lineTo(-boxW/2, -boxH/2); ctx.lineTo(-boxW/2 + cw, -boxH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(boxW/2 - cw, -boxH/2); ctx.lineTo(boxW/2, -boxH/2); ctx.lineTo(boxW/2, -boxH/2 + ch); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-boxW/2, boxH/2 - ch); ctx.lineTo(-boxW/2, boxH/2); ctx.lineTo(-boxW/2 + cw, boxH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(boxW/2 - cw, boxH/2); ctx.lineTo(boxW/2, boxH/2); ctx.lineTo(boxW/2, boxH/2 - ch); ctx.stroke();
+    ctx.font = `bold ${10 * s}px "Courier New", monospace`; ctx.fillStyle = '#06b6d4'; ctx.textAlign = 'center'; ctx.fillText("IDENTITY CORE", 0, -10 * s);
+    ctx.font = `bold ${16 * s}px "Courier New", monospace`; ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 10; ctx.shadowColor = '#22d3ee'; ctx.fillText("MY PROFILE", 0, 10 * s);
+    ctx.restore();
+
+  } else if (zoneType === 'skills') {
+    // === DATA CITADEL (Skyscraper) ===
+    const coreColor = '#d946ef'; // Fuchsia
+    const darkColor = '#4a044e';
+    const lightColor = '#f0abfc';
+    
+    ctx.translate(0, 10); // Align to ground
+
+    // 1. Foundation
+    ctx.fillStyle = '#2e1065';
+    ctx.beginPath();
+    ctx.moveTo(-50 * s, 0);
+    ctx.lineTo(50 * s, 0);
+    ctx.lineTo(60 * s, 20 * s); // Slant down
+    ctx.lineTo(-60 * s, 20 * s);
+    ctx.fill();
+
+    // 2. Main Tower Structure
+    ctx.fillStyle = darkColor;
+    ctx.beginPath();
+    ctx.moveTo(-35 * s, 0);
+    ctx.lineTo(-30 * s, -120 * s); // Taper up
+    ctx.lineTo(30 * s, -120 * s);
+    ctx.lineTo(35 * s, 0);
+    ctx.fill();
+
+    // Side pillars
+    ctx.fillStyle = '#2c0b36'; // Darker
+    ctx.fillRect(-45 * s, 0, 10 * s, -80 * s);
+    ctx.fillRect(35 * s, 0, 10 * s, -80 * s);
+
+    // 3. Neon Cooling Pipes (Veins)
+    ctx.strokeStyle = coreColor;
+    ctx.lineWidth = 2 * s;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = coreColor;
+    ctx.beginPath();
+    ctx.moveTo(-30 * s, -10 * s); ctx.lineTo(-30 * s, -110 * s);
+    ctx.moveTo(30 * s, -10 * s); ctx.lineTo(30 * s, -110 * s);
+    ctx.stroke();
+
+    // 4. Server Racks (Blinking Lights)
+    const rows = 6;
+    const cols = 3;
+    const padX = 15 * s;
+    const padY = 15 * s;
+    
+    for(let r=0; r<rows; r++) {
+        for(let c=0; c<cols; c++) {
+            const lightX = -20 * s + (c * 20 * s);
+            const lightY = -20 * s - (r * 15 * s);
+            
+            // Random blinking based on time and index
+            const blink = Math.sin(time * 0.01 + r * c) > 0;
+            ctx.fillStyle = blink ? lightColor : '#701a75';
+            
+            ctx.shadowBlur = blink ? 5 : 0;
+            ctx.fillRect(lightX, lightY, 10 * s, 4 * s);
+        }
+    }
+    ctx.shadowBlur = 0;
+
+    // 5. Roof Processor (Floating Brain)
+    ctx.translate(0, -130 * s);
+    // Floating levitation
+    const hover = Math.sin(time * 0.005) * 5;
+    ctx.translate(0, hover);
+    
+    // Core shape
+    ctx.fillStyle = '#fdf4ff';
+    ctx.shadowColor = coreColor;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.moveTo(0, -20 * s);
+    ctx.lineTo(15 * s, 0);
+    ctx.lineTo(0, 20 * s);
+    ctx.lineTo(-15 * s, 0);
+    ctx.fill();
+    
+    // Spinning rings around top
+    ctx.strokeStyle = lightColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 30 * s, 8 * s, time * 0.002, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 30 * s, 8 * s, -time * 0.002, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Signage
+    ctx.translate(0, -40 * s);
+    ctx.fillStyle = lightColor;
+    ctx.font = `bold ${8 * s}px "Courier New", monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText("NEURAL LINK", 0, 0);
+
+  } else if (zoneType === 'projects') {
+    // === FLOATING MUSEUM (Gold Dome) ===
+    const goldColor = '#f59e0b';
+    const glassColor = 'rgba(255, 251, 235, 0.3)';
+    
+    ctx.translate(0, -20 * s); // Hovering slightly
+
+    // 1. Anti-Gravity Engines (Bottom)
+    const hover = Math.sin(time * 0.003) * 5;
+    ctx.translate(0, hover);
+
+    ctx.fillStyle = '#451a03'; // Dark wood/metal
+    ctx.beginPath();
+    ctx.moveTo(-60 * s, 0);
+    ctx.lineTo(60 * s, 0);
+    ctx.lineTo(40 * s, 20 * s);
+    ctx.lineTo(-40 * s, 20 * s);
+    ctx.fill();
+
+    // Engine glow
+    ctx.fillStyle = '#3b82f6'; // Blue engine thrust
+    ctx.shadowColor = '#3b82f6';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.ellipse(-30 * s, 15 * s, 8 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(30 * s, 15 * s, 8 * s, 3 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 2. Main Hall (Walls)
+    ctx.fillStyle = '#78350f'; // Amber dark
+    ctx.fillRect(-60 * s, -40 * s, 120 * s, 40 * s);
+
+    // Pillars
+    ctx.fillStyle = goldColor;
+    ctx.fillRect(-62 * s, -40 * s, 5 * s, 40 * s);
+    ctx.fillRect(57 * s, -40 * s, 5 * s, 40 * s);
+    ctx.fillRect(-20 * s, -40 * s, 5 * s, 40 * s);
+    ctx.fillRect(15 * s, -40 * s, 5 * s, 40 * s);
+
+    // 3. The Grand Dome (Glass)
+    ctx.save();
+    ctx.translate(0, -40 * s);
+    
+    // Back Dome outline
+    ctx.beginPath();
+    ctx.arc(0, 0, 55 * s, Math.PI, 0); // Half circle
+    ctx.fillStyle = glassColor;
+    ctx.fill();
+    
+    // Dome Grid
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Internal Hologram (Artifact)
+    ctx.fillStyle = goldColor;
+    ctx.shadowColor = goldColor;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    // A floating pyramid inside
+    const pyY = Math.sin(time * 0.005) * 5 - 10 * s;
+    ctx.moveTo(0, pyY - 15 * s);
+    ctx.lineTo(10 * s, pyY + 10 * s);
+    ctx.lineTo(-10 * s, pyY + 10 * s);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
+
+    // 4. Entrance Steps (Holographic)
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+    ctx.beginPath();
+    ctx.moveTo(-15 * s, 0);
+    ctx.lineTo(15 * s, 0);
+    ctx.lineTo(25 * s, 30 * s); // Extend down towards ground
+    ctx.lineTo(-25 * s, 30 * s);
+    ctx.fill();
+
+    // 5. Signage
+    ctx.translate(0, -110 * s);
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = `bold ${8 * s}px "Courier New", monospace`;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = goldColor;
+    ctx.shadowBlur = 10;
+    ctx.fillText("HOLO GALLERY", 0, 0);
+
+
+  } else if (zoneType === 'contact') {
+    // === ORBITAL COMMAND CENTER ===
+    const techColor = '#8b5cf6'; // Violet
+    const darkBase = '#1e1b4b'; // Indigo dark
+    
+    ctx.translate(0, 20 * s); // Grounded
+
+    // 1. Heavy Bunker Base
+    ctx.fillStyle = darkBase;
+    ctx.beginPath();
+    ctx.moveTo(-50 * s, 0);
+    ctx.lineTo(50 * s, 0);
+    ctx.lineTo(40 * s, -30 * s); // Slope up
+    ctx.lineTo(-40 * s, -30 * s);
+    ctx.fill();
+    
+    // Hazard Stripes
+    ctx.strokeStyle = techColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-45 * s, -5 * s); ctx.lineTo(-35 * s, -25 * s);
+    ctx.moveTo(45 * s, -5 * s); ctx.lineTo(35 * s, -25 * s);
+    ctx.stroke();
+
+    // 2. Control Tower Shaft
+    ctx.fillStyle = '#4c1d95';
+    ctx.fillRect(-15 * s, -90 * s, 30 * s, 60 * s);
+    
+    // Ladder/Details
+    ctx.fillStyle = '#6d28d9';
+    ctx.fillRect(-5 * s, -90 * s, 10 * s, 60 * s);
+
+    // 3. Observation Deck (Head)
+    ctx.translate(0, -90 * s);
+    ctx.fillStyle = darkBase;
+    // Hexagonal control room
+    ctx.beginPath();
+    ctx.moveTo(-30 * s, 0);
+    ctx.lineTo(-40 * s, -20 * s);
+    ctx.lineTo(-20 * s, -40 * s);
+    ctx.lineTo(20 * s, -40 * s);
+    ctx.lineTo(40 * s, -20 * s);
+    ctx.lineTo(30 * s, 0);
+    ctx.fill();
+
+    // Windows
+    ctx.fillStyle = '#c4b5fd'; // Light violet glass
+    ctx.shadowColor = techColor;
+    ctx.shadowBlur = 15;
+    ctx.fillRect(-30 * s, -30 * s, 60 * s, 5 * s);
+    ctx.shadowBlur = 0;
+
+    // 4. Rotating Radar Dish
+    ctx.save();
+    ctx.translate(0, -40 * s);
+    
+    // Swivel
+    const angle = Math.sin(time * 0.001) * 0.5; // Slow sweep
+    ctx.rotate(angle - 0.5); // Tilt slightly left default
+
+    // Dish Stem
+    ctx.fillStyle = '#6d28d9';
+    ctx.fillRect(-2 * s, -15 * s, 4 * s, 15 * s);
+    
+    // The Dish
+    ctx.beginPath();
+    ctx.arc(0, -25 * s, 25 * s, 0.8 * Math.PI, 2.2 * Math.PI, true);
+    ctx.fillStyle = '#ddd6fe';
+    ctx.fill();
+    ctx.strokeStyle = techColor;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Receiver Spike
+    ctx.beginPath();
+    ctx.moveTo(0, -25 * s);
+    ctx.lineTo(0, -45 * s);
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+    
+    // Signal Waves (Animated)
+    const waveSize = (time * 0.1) % 40;
+    ctx.beginPath();
+    ctx.arc(0, -45 * s, waveSize, 1.2 * Math.PI, 1.8 * Math.PI);
+    ctx.strokeStyle = `rgba(139, 92, 246, ${1 - waveSize/40})`;
     ctx.stroke();
 
     ctx.restore();
 
-  } else if (zoneType === 'about') {
-    // === HOLOGRAPHIC BIO-DATA STATION (UPDATED TO MATCH HUD) ===
-    const pulse = Math.sin(time * 0.005);
-    
-    // Base Platform (Changed to Cyan/Dark theme)
-    ctx.fillStyle = '#083344'; // Dark Cyan/Slate
-    ctx.fillRect(-40 * s, -10 * s, 80 * s, 10 * s);
-    // Glowing rim
-    ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-40 * s, -10 * s, 80 * s, 10 * s);
-
-    // Hologram Beam (Cyan)
-    const grad = ctx.createLinearGradient(0, -10 * s, 0, -150 * s);
-    grad.addColorStop(0, 'rgba(34, 211, 238, 0.4)');
-    grad.addColorStop(1, 'rgba(34, 211, 238, 0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.moveTo(-30 * s, -10 * s);
-    ctx.lineTo(30 * s, -10 * s);
-    ctx.lineTo(40 * s, -150 * s);
-    ctx.lineTo(-40 * s, -150 * s);
-    ctx.fill();
-
-    // DNA Helix Animation (Cyan)
-    ctx.save();
-    ctx.translate(0, -80 * s);
-    for (let i = 0; i < 10; i++) {
-        const yOffset = i * 15 - 75;
-        const xOffset = Math.sin(time * 0.003 + i * 0.5) * 20 * s;
-        
-        ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#06b6d4'; // Cyan 400 / 500
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#22d3ee';
-        ctx.beginPath();
-        ctx.arc(xOffset, yOffset, 4 * s, 0, Math.PI * 2);
-        ctx.arc(-xOffset, yOffset, 4 * s, 0, Math.PI * 2); // Mirror
-        ctx.fill();
-        
-        // Connector
-        ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(xOffset, yOffset);
-        ctx.lineTo(-xOffset, yOffset);
-        ctx.stroke();
-    }
-    ctx.restore();
-
-    // Sign "MY PROFILE" (HUD Style)
-    ctx.save();
-    ctx.translate(0, -160 * s + (pulse * 5)); // Higher up
-    
-    const boxW = 140 * s;
-    const boxH = 50 * s;
-    
-    // Background
-    ctx.fillStyle = 'rgba(0, 10, 20, 0.85)'; // Dark
-    ctx.fillRect(-boxW/2, -boxH/2, boxW, boxH);
-    
-    // Scan line (Clipping)
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(-boxW/2, -boxH/2, boxW, boxH);
-    ctx.clip();
-    
-    const scanY = (time * 0.05) % boxH - boxH/2;
-    ctx.fillStyle = 'rgba(34, 211, 238, 0.2)';
-    ctx.fillRect(-boxW/2, scanY, boxW, 5); // Scan bar
-    ctx.restore();
-
-    // Borders
-    ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-boxW/2, -boxH/2, boxW, boxH);
-
-    // Decorative Corners (Thick Cyan)
-    ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 3;
-    const cw = 10;
-    const ch = 10;
-    
-    // TL
-    ctx.beginPath(); ctx.moveTo(-boxW/2, -boxH/2 + ch); ctx.lineTo(-boxW/2, -boxH/2); ctx.lineTo(-boxW/2 + cw, -boxH/2); ctx.stroke();
-    // TR
-    ctx.beginPath(); ctx.moveTo(boxW/2 - cw, -boxH/2); ctx.lineTo(boxW/2, -boxH/2); ctx.lineTo(boxW/2, -boxH/2 + ch); ctx.stroke();
-    // BL
-    ctx.beginPath(); ctx.moveTo(-boxW/2, boxH/2 - ch); ctx.lineTo(-boxW/2, boxH/2); ctx.lineTo(-boxW/2 + cw, boxH/2); ctx.stroke();
-    // BR
-    ctx.beginPath(); ctx.moveTo(boxW/2 - cw, boxH/2); ctx.lineTo(boxW/2, boxH/2); ctx.lineTo(boxW/2, boxH/2 - ch); ctx.stroke();
-
-    // Text: Subtitle
-    ctx.font = `bold ${10 * s}px "Courier New", monospace`;
-    ctx.fillStyle = '#06b6d4'; // Darker cyan
+    // Signage text
+    ctx.fillStyle = '#a78bfa';
+    ctx.font = `bold ${7 * s}px "Courier New", monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText("IDENTITY CORE", 0, -10 * s);
-
-    // Text: Title
-    ctx.font = `bold ${16 * s}px "Courier New", monospace`;
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#22d3ee';
-    ctx.fillText("MY PROFILE", 0, 10 * s);
-
-    ctx.restore();
-
-  } else if (zoneType === 'skills') {
-    // Computer terminal or floating cube
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#F472B6';
-    ctx.strokeStyle = '#F472B6';
-    ctx.lineWidth = 3 * s;
-    ctx.strokeRect(-25 * s, -50 * s, 50 * s, 50 * s);
-    // Code lines
-    ctx.fillStyle = '#F472B6';
-    ctx.fillRect(-20 * s, -40 * s, 30 * s, 4 * s);
-    ctx.fillRect(-20 * s, -30 * s, 20 * s, 4 * s);
-    ctx.fillRect(-20 * s, -20 * s, 35 * s, 4 * s);
-  } else if (zoneType === 'projects') {
-    // Gallery Frame
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#FBBF24';
-    ctx.fillStyle = '#FBBF24';
-    ctx.fillRect(-30 * s, -60 * s, 60 * s, 40 * s);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(-25 * s, -55 * s, 50 * s, 30 * s); // Screen
-    ctx.fillStyle = '#FBBF24'; // Stand
-    ctx.fillRect(-5 * s, -20 * s, 10 * s, 20 * s);
-    ctx.fillRect(-20 * s, 0, 40 * s, 5 * s);
-  } else if (zoneType === 'contact') {
-    // Mailbox
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#A78BFA';
-    ctx.fillStyle = '#A78BFA';
-    ctx.beginPath();
-    ctx.arc(0, -40 * s, 25 * s, Math.PI, 0); // Top arch
-    ctx.lineTo(25 * s, -10 * s);
-    ctx.lineTo(-25 * s, -10 * s);
-    ctx.fill();
-    ctx.fillRect(-5 * s, -10 * s, 10 * s, 40 * s); // Pole
+    ctx.fillText("UPLINK", 0, 15 * s);
   }
 
   ctx.restore();

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
 import UIOverlay from './components/UIOverlay';
 import Modal from './components/Modal';
@@ -11,7 +12,7 @@ function App() {
   const [activeModal, setActiveModal] = useState<Zone | null>(null);
   const [progress, setProgress] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [audioMuted, setAudioMuted] = useState(true);
+  const [audioMuted, setAudioMuted] = useState(false); // Default to ON for immersion
   
   // User Personalization State
   const [showLogin, setShowLogin] = useState(true);
@@ -140,112 +141,322 @@ function App() {
     switch (activeModal.type) {
       case 'about':
         return (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-500 shadow-lg shrink-0">
-                <img src="https://picsum.photos/seed/profile/200" alt="Profile" className="w-full h-full object-cover" />
+          <div className="relative font-mono">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none">
+              <svg className="w-32 h-32 text-cyan-500 animate-[spin_10s_linear_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                 <circle cx="50" cy="50" r="45" strokeWidth="1" strokeDasharray="10 5" />
+                 <path d="M50 0 L50 100 M0 50 L100 50" strokeWidth="0.5" />
+              </svg>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-8 relative z-10">
+              {/* Profile/Home Base Visual Column */}
+              <div className="flex flex-col items-center gap-4 shrink-0">
+                <div className="relative w-56 h-56 group bg-[#050b14] overflow-hidden rounded-2xl border border-cyan-500/50 shadow-[0_0_25px_rgba(34,211,238,0.15)]">
+                  {/* Digital Grid Background */}
+                  <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle, rgba(34, 211, 238, 0.15) 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+                  
+                  {/* ULTRA-DETAILED ISOMETRIC CITADEL SVG */}
+                  <svg className="absolute inset-0 w-full h-full p-2 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="gradBase" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1e293b" />
+                          <stop offset="100%" stopColor="#0f172a" />
+                        </linearGradient>
+                        <linearGradient id="gradGlass" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="rgba(34, 211, 238, 0.6)" />
+                          <stop offset="100%" stopColor="rgba(6, 182, 212, 0.2)" />
+                        </linearGradient>
+                        <linearGradient id="gradGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#22d3ee" />
+                          <stop offset="100%" stopColor="#0891b2" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* --- BASE PLATFORM (Isometric Hexagon) --- */}
+                      <path d="M100 180 L160 150 L160 130 L100 160 L40 130 L40 150 Z" fill="url(#gradBase)" stroke="#0e7490" strokeWidth="2" />
+                      <path d="M100 160 L160 130 L100 100 L40 130 Z" fill="#1e293b" opacity="0.8">
+                        <animate attributeName="opacity" values="0.8;0.6;0.8" dur="4s" repeatCount="indefinite" />
+                      </path>
+                      {/* Grid on base */}
+                      <path d="M100 160 L100 100 M40 130 L160 130" stroke="#0e7490" strokeWidth="0.5" />
+
+                      {/* --- MAIN STRUCTURE --- */}
+                      {/* Level 1 Block */}
+                      <path d="M130 130 L130 90 L100 105 L70 90 L70 130 L100 145 Z" fill="#0f172a" stroke="#22d3ee" strokeWidth="1" />
+                      
+                      {/* Level 2 (Glass Atrium) */}
+                      <path d="M125 90 L125 60 L100 75 L75 60 L75 90 L100 105 Z" fill="url(#gradGlass)" stroke="#a5f3fc" strokeWidth="1" />
+                      {/* Internal light */}
+                      <circle cx="100" cy="85" r="5" fill="#fef08a" className="animate-pulse" filter="blur(2px)" />
+
+                      {/* Level 3 (Command Deck) */}
+                      <path d="M115 60 L115 40 L100 50 L85 40 L85 60 L100 75 Z" fill="#1e293b" stroke="#22d3ee" strokeWidth="1" />
+                      <path d="M100 40 L115 32 L100 24 L85 32 Z" fill="#22d3ee" className="animate-pulse" />
+
+                      {/* --- DETAILS --- */}
+                      {/* Energy Bridge */}
+                      <path d="M130 110 L160 95" stroke="#22d3ee" strokeWidth="2" strokeDasharray="4 2" className="animate-[pulse_1s_linear_infinite]" />
+                      <circle cx="160" cy="95" r="3" fill="#22d3ee" />
+
+                      {/* Floating Data Cubes */}
+                      <rect x="40" y="60" width="10" height="10" transform="rotate(45 45 65)" fill="url(#gradGlow)" className="animate-[bounce_3s_infinite]" />
+                      <rect x="150" y="50" width="8" height="8" transform="rotate(45 154 54)" fill="url(#gradGlow)" className="animate-[bounce_4s_infinite]" />
+
+                      {/* Flying Drone */}
+                      <g className="animate-[spin_8s_linear_infinite] origin-[100px_80px]">
+                         <circle cx="100" cy="20" r="2" fill="#f43f5e" />
+                         <path d="M100 20 L100 80" stroke="#f43f5e" strokeWidth="0.5" strokeDasharray="2 4" opacity="0.5" />
+                      </g>
+                      
+                      {/* Holographic Rings */}
+                      <ellipse cx="100" cy="130" rx="50" ry="25" stroke="#22d3ee" strokeWidth="0.5" fill="none" className="animate-[spin_10s_linear_infinite]" opacity="0.3" />
+                  </svg>
+                </div>
+                
+                {/* ID Card / Stats */}
+                <div className="w-56 bg-black/40 border border-cyan-500/30 rounded-lg p-3 font-mono text-xs text-cyan-300">
+                    <div className="flex justify-between border-b border-cyan-500/30 pb-1 mb-2">
+                        <span>CLASS</span>
+                        <span className="text-white">CYBER-DEV</span>
+                    </div>
+                    <div className="flex justify-between border-b border-cyan-500/30 pb-1 mb-2">
+                        <span>LEVEL</span>
+                        <span className="text-white">MAX_INT</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>ORIGIN</span>
+                        <span className="text-white">NET_CITY</span>
+                    </div>
+                </div>
               </div>
-              <div className="space-y-2 text-center md:text-left">
-                <h3 className="text-3xl font-bold text-emerald-400">Creative Developer</h3>
-                <p className="text-gray-300 leading-relaxed max-w-lg">{ABOUT_TEXT}</p>
-                <button className="mt-4 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors">
-                  Download Resume
-                </button>
+
+              {/* Bio Content */}
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                    <h3 className="text-lg text-cyan-400 font-bold tracking-widest">USER_BIO_DECRYPTED</h3>
+                </div>
+                
+                <p className="text-gray-300 leading-relaxed border-l-2 border-cyan-500/20 pl-4 py-1">
+                  {ABOUT_TEXT}
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="bg-cyan-900/10 border border-cyan-500/20 p-3 rounded">
+                        <div className="text-cyan-500 text-xs mb-1">CURRENT STATUS</div>
+                        <div className="text-white">OPEN TO WORK</div>
+                    </div>
+                    <div className="bg-cyan-900/10 border border-cyan-500/20 p-3 rounded">
+                        <div className="text-cyan-500 text-xs mb-1">SPECIALIZATION</div>
+                        <div className="text-white">FULL STACK</div>
+                    </div>
+                </div>
+
+                <div className="pt-4">
+                    <button className="group relative px-6 py-3 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500 text-cyan-400 hover:text-white transition-all overflow-hidden rounded">
+                        <div className="absolute inset-0 w-full h-full bg-cyan-400/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300"></div>
+                        <span className="relative font-bold tracking-wider flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            EXTRACT DATA LOG
+                        </span>
+                    </button>
+                </div>
               </div>
             </div>
           </div>
         );
-      
+
       case 'skills':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {SKILLS.map((category) => (
-              <div key={category.category} className="bg-gray-800/50 p-4 rounded-lg">
-                <h3 className="text-xl font-bold text-pink-400 mb-4 border-b border-pink-500/30 pb-2">{category.category}</h3>
-                <div className="space-y-4">
-                  {category.items.map((skill) => (
-                    <div key={skill.name}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-200">{skill.name}</span>
-                        <span className="text-pink-300">{skill.level}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-pink-600 to-purple-600" 
-                          style={{ width: `${skill.level}%` }}
-                        />
-                      </div>
+          <div className="font-mono">
+            {/* Header / Neural Net Viz */}
+            <div className="mb-8 flex items-center justify-between border-b border-fuchsia-500/30 pb-4">
+                <div className="flex items-center gap-3">
+                    <div className="relative w-10 h-10 flex items-center justify-center">
+                        <div className="absolute inset-0 border-2 border-fuchsia-500 rounded-full animate-ping opacity-20"></div>
+                        <div className="w-4 h-4 bg-fuchsia-500 rounded-full shadow-[0_0_10px_#d946ef]"></div>
                     </div>
-                  ))}
+                    <h3 className="text-2xl text-fuchsia-400 tracking-widest font-bold">NEURAL_LINKS_ACTIVE</h3>
                 </div>
-              </div>
-            ))}
+                <div className="text-xs text-fuchsia-300/60">SYS_OPTIMIZED: 98%</div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {SKILLS.map((category) => (
+                <div key={category.category} className="group relative bg-[#1a051d] border border-fuchsia-500/30 p-5 rounded-xl hover:border-fuchsia-500 transition-all duration-300 overflow-hidden">
+                  {/* Hover Scan Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-fuchsia-500/5 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-700"></div>
+
+                  <h3 className="text-lg font-bold mb-4 text-fuchsia-200 border-l-4 border-fuchsia-500 pl-3">
+                    {category.category.replace('_', ' ')}
+                  </h3>
+                  
+                  <div className="space-y-4 relative z-10">
+                    {category.items.map((skill) => (
+                      <div key={skill.name}>
+                        <div className="flex justify-between mb-1 text-xs tracking-wider text-fuchsia-100/80">
+                          <span>{skill.name}</span>
+                          <span className="font-bold">{skill.level}%</span>
+                        </div>
+                        {/* Segmented Progress Bar */}
+                        <div className="flex gap-1 h-2">
+                           {[...Array(10)].map((_, i) => (
+                              <div 
+                                key={i}
+                                className={`flex-1 rounded-sm transition-all duration-500 ${
+                                    i < skill.level / 10 
+                                    ? 'bg-fuchsia-500 shadow-[0_0_5px_#d946ef]' 
+                                    : 'bg-fuchsia-900/30'
+                                }`}
+                                style={{ 
+                                    opacity: i < skill.level / 10 ? 1 : 0.3,
+                                    animationDelay: `${i * 0.05}s` 
+                                }}
+                              />
+                           ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         );
 
       case 'projects':
         return (
-          <div className="grid grid-cols-1 gap-8">
-            {PROJECTS.map((project) => (
-              <div key={project.id} className="group relative bg-gray-800 rounded-xl overflow-hidden hover:ring-2 hover:ring-yellow-500 transition-all">
-                <div className="flex flex-col md:flex-row">
-                   <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
-                      <img src={project.image} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                   </div>
-                   <div className="p-6 flex-1 flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-2xl font-bold text-yellow-400 mb-2">{project.title}</h3>
-                        <p className="text-gray-300 mb-4">{project.description}</p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {project.tech.map(t => (
-                            <span key={t} className="px-2 py-1 bg-gray-700 text-xs text-yellow-200 rounded-md border border-gray-600">{t}</span>
-                          ))}
+          <div className="font-mono text-amber-500">
+             <div className="flex justify-between items-end mb-6 border-b-2 border-amber-500/20 pb-2">
+                <h3 className="text-3xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+                    MISSION_LOGS
+                </h3>
+                <span className="text-xs bg-amber-500/10 px-2 py-1 rounded text-amber-300 border border-amber-500/30">
+                    CLASSIFIED FILES
+                </span>
+             </div>
+
+            <div className="grid grid-cols-1 gap-12">
+              {PROJECTS.map((project, index) => (
+                <div key={project.id} className="relative group perspective-1000">
+                  {/* Holographic Card Container */}
+                  <div className="relative bg-[#0c0a00] border border-amber-500/30 rounded-lg p-1 overflow-hidden transition-all duration-300 group-hover:border-amber-400 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                    
+                    {/* Corner accents */}
+                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-amber-500"></div>
+                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-amber-500"></div>
+                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-amber-500"></div>
+                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-amber-500"></div>
+
+                    <div className="flex flex-col md:flex-row gap-6 p-4">
+                        {/* Image Holo-Projector */}
+                        <div className="md:w-5/12 relative rounded overflow-hidden border border-amber-900/50">
+                            <img 
+                                src={project.image} 
+                                alt={project.title} 
+                                className="w-full h-48 md:h-full object-cover filter sepia-[0.5] hue-rotate-[-30deg] contrast-125 group-hover:filter-none transition-all duration-500"
+                            />
+                            {/* Scanlines */}
+                            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,11,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] pointer-events-none"></div>
                         </div>
-                      </div>
-                      <div className="flex gap-4">
-                         <button className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white py-2 rounded font-bold transition-colors">Live Demo</button>
-                         <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded font-bold transition-colors border border-gray-600">GitHub</button>
-                      </div>
-                   </div>
+
+                        {/* Data Content */}
+                        <div className="md:w-7/12 flex flex-col justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs text-amber-700 font-bold border border-amber-800 px-1">REF_0{index + 1}</span>
+                                    <h4 className="text-2xl font-bold text-amber-100 group-hover:text-white transition-colors">{project.title}</h4>
+                                </div>
+                                
+                                <p className="text-amber-200/70 text-sm leading-relaxed mb-4 border-l border-amber-500/30 pl-3">
+                                    {project.description}
+                                </p>
+                                
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {project.tech.map((t) => (
+                                    <span key={t} className="px-2 py-1 text-[10px] uppercase tracking-wider bg-amber-900/20 text-amber-300 border border-amber-500/20">
+                                        {t}
+                                    </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 mt-auto">
+                                <button className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-all">
+                                    <span className="w-2 h-2 bg-black animate-pulse"></span> Initiate
+                                </button>
+                                <button className="flex-1 py-2 border border-amber-500 text-amber-500 hover:bg-amber-500/10 font-bold uppercase text-xs tracking-widest transition-all">
+                                    Source_Code
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         );
 
       case 'contact':
         return (
-          <div className="max-w-2xl mx-auto space-y-8">
-            <div className="text-center space-y-4">
-              <p className="text-gray-300">Interested in working together? Send me a message or find me on social platforms.</p>
-              <div className="flex justify-center gap-6">
-                 {['GitHub', 'LinkedIn', 'Twitter', 'Behance'].map(social => (
-                   <div key={social} className="w-12 h-12 bg-gray-800 hover:bg-violet-600 rounded-full flex items-center justify-center cursor-pointer transition-colors text-xl font-bold text-gray-400 hover:text-white">
-                      {social[0]}
-                   </div>
-                 ))}
-              </div>
-            </div>
+          <div className="font-mono max-w-2xl mx-auto">
+             <div className="text-center mb-8">
+                 <div className="inline-block border border-violet-500/50 bg-violet-900/10 px-6 py-2 rounded-full mb-4">
+                     <span className="w-2 h-2 inline-block bg-violet-400 rounded-full animate-pulse mr-2"></span>
+                     <span className="text-violet-300 text-xs tracking-[0.2em]">SECURE_CHANNEL_OPEN</span>
+                 </div>
+                 <h2 className="text-3xl text-white font-bold">TRANSMISSION_TERMINAL</h2>
+             </div>
             
-            <form className="space-y-4 bg-gray-800/50 p-6 rounded-xl border border-violet-500/20" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Name</label>
-                  <input type="text" className="w-full bg-gray-900 border border-gray-700 rounded p-2 focus:border-violet-500 focus:outline-none text-white" placeholder="John Doe" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-gray-400">Email</label>
-                  <input type="email" className="w-full bg-gray-900 border border-gray-700 rounded p-2 focus:border-violet-500 focus:outline-none text-white" placeholder="john@example.com" />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-gray-400">Message</label>
-                <textarea rows={4} className="w-full bg-gray-900 border border-gray-700 rounded p-2 focus:border-violet-500 focus:outline-none text-white" placeholder="Tell me about your project..."></textarea>
-              </div>
-              <button className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-lg transition-transform hover:scale-[1.01]">
-                Send Transmission
-              </button>
-            </form>
+            <div className="relative bg-black/60 border border-violet-500/30 p-8 rounded-lg shadow-[0_0_50px_rgba(139,92,246,0.1)]">
+               {/* Terminal dots */}
+               <div className="flex gap-2 mb-6 border-b border-gray-800 pb-4">
+                   <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                   <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                   <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+               </div>
+
+                <form className="space-y-6">
+                    <div className="group">
+                        <label className="block text-xs text-violet-400 mb-1 opacity-70 group-focus-within:opacity-100 transition-opacity">IDENTIFIER_NAME</label>
+                        <input 
+                            type="text" 
+                            className="w-full bg-transparent border-b border-gray-700 text-white p-2 focus:outline-none focus:border-violet-500 transition-colors font-mono"
+                            placeholder="> Enter sender identity..."
+                        />
+                    </div>
+                    <div className="group">
+                        <label className="block text-xs text-violet-400 mb-1 opacity-70 group-focus-within:opacity-100 transition-opacity">COMM_FREQUENCY (EMAIL)</label>
+                        <input 
+                            type="email" 
+                            className="w-full bg-transparent border-b border-gray-700 text-white p-2 focus:outline-none focus:border-violet-500 transition-colors font-mono"
+                            placeholder="> Enter return frequency..."
+                        />
+                    </div>
+                    <div className="group">
+                        <label className="block text-xs text-violet-400 mb-1 opacity-70 group-focus-within:opacity-100 transition-opacity">ENCRYPTED_MESSAGE</label>
+                        <textarea 
+                            className="w-full bg-violet-900/5 border border-gray-700 text-white p-4 h-32 focus:outline-none focus:border-violet-500 transition-colors font-mono resize-none"
+                            placeholder="> Input data stream..."
+                        ></textarea>
+                    </div>
+                    <button className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-4 rounded shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.6)] transition-all uppercase tracking-widest flex items-center justify-center gap-3 group">
+                        <span>TRANSMIT_SIGNAL</span>
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                    </button>
+                </form>
+
+                 <div className="mt-8 pt-6 border-t border-gray-800 flex justify-center gap-8">
+                     {['GITHUB_UPLINK', 'LINKEDIN_NODE', 'TWITTER_FEED'].map(social => (
+                         <a key={social} href="#" className="text-xs text-gray-500 hover:text-violet-400 transition-colors tracking-widest border border-transparent hover:border-violet-500/30 px-3 py-1 rounded">
+                             [{social}]
+                         </a>
+                     ))}
+                 </div>
+            </div>
           </div>
         );
 
@@ -254,20 +465,18 @@ function App() {
     }
   };
 
-  // Determine if intro text should be shown or hidden
-  const showIntro = !showLogin && progress < 0.02 && !activeModal;
-
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-gray-900">
+    <div className="relative w-full h-screen bg-slate-900 overflow-hidden select-none font-sans">
       <GameCanvas 
-        onZoneEnter={handleZoneEnter}
-        onInteract={handleInteract}
         gameState={gameState}
         setGameState={setGameState}
+        onZoneEnter={handleZoneEnter}
+        onInteract={handleInteract}
         isMobile={isMobile}
         activeInputRef={inputRef}
         onUpdateProgress={setProgress}
         userName={userName}
+        audioMuted={audioMuted}
       />
       
       <UIOverlay 
@@ -279,37 +488,8 @@ function App() {
         onToggleAudio={() => setAudioMuted(!audioMuted)}
       />
 
-      {/* Login Modal */}
-      {showLogin && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
-            <div className="w-full max-w-md p-8 bg-gray-900 border border-cyan-500 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.2)] text-center animate-fade-in">
-                <div className="mb-6">
-                    <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2">SYSTEM LOGIN</h2>
-                    <p className="text-gray-400 font-mono text-sm">IDENTIFY YOURSELF, TRAVELER</p>
-                </div>
-                <form onSubmit={handleLoginSubmit} className="space-y-6">
-                    <input 
-                        type="text" 
-                        value={tempName}
-                        onChange={(e) => setTempName(e.target.value)}
-                        placeholder="Enter Username..." 
-                        className="w-full bg-black border-2 border-gray-700 focus:border-cyan-500 text-white text-center text-xl py-3 rounded-lg outline-none transition-colors font-mono placeholder-gray-600"
-                        autoFocus
-                    />
-                    <button 
-                        type="submit" 
-                        disabled={!tempName.trim()}
-                        className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold tracking-widest rounded-lg transition-all shadow-lg hover:shadow-cyan-500/30"
-                    >
-                        INITIALIZE
-                    </button>
-                </form>
-            </div>
-        </div>
-      )}
-
-      <Modal 
-        isOpen={gameState === GameState.MODAL_OPEN} 
+      <Modal
+        isOpen={gameState === GameState.MODAL_OPEN}
         onClose={closeModal}
         title={activeModal?.title || ''}
         color={activeModal?.color || '#fff'}
@@ -317,29 +497,61 @@ function App() {
         {renderModalContent()}
       </Modal>
 
-      {/* Intro Overlay - Restored Position & Smooth Transition */}
+      {/* Login / Intro Overlay */}
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md">
+            <div className="w-full max-w-md p-8 bg-gray-900/50 border border-cyan-500/30 rounded-2xl shadow-[0_0_50px_rgba(34,211,238,0.2)]">
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-bold text-white font-mono tracking-tighter mb-2">SYSTEM LOGIN</h1>
+                    <p className="text-cyan-400/60 font-mono text-sm">SECURE TERMINAL ACCESS</p>
+                </div>
+                
+                <form onSubmit={handleLoginSubmit} className="space-y-6">
+                    <div className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                        <input 
+                            type="text" 
+                            value={tempName}
+                            onChange={(e) => setTempName(e.target.value)}
+                            className="relative w-full bg-black border border-gray-800 rounded-lg px-4 py-4 text-white text-center font-mono placeholder-gray-700 focus:outline-none focus:border-cyan-500 transition-colors"
+                            placeholder="ENTER IDENTITY..."
+                            autoFocus
+                        />
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        disabled={tempName.trim().length === 0}
+                        className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all transform hover:scale-[1.02] shadow-lg font-mono tracking-widest"
+                    >
+                        INITIALIZE_SESSION
+                    </button>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* Intro Text Overlay (After Login) */}
       {!showLogin && (
         <div 
-            className={`absolute top-[20%] left-6 md:left-20 z-10 flex flex-col items-start text-left pointer-events-none transition-all duration-700 ease-out ${showIntro ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}
+            className={`absolute top-[20%] left-6 md:left-20 pointer-events-none transition-all duration-1000 ease-in-out ${
+                progress > 0.02 ? 'opacity-0 -translate-y-10' : 'opacity-100 translate-y-0'
+            }`}
         >
-           <h2 className="text-4xl md:text-7xl font-black text-white mb-2 drop-shadow-2xl tracking-tighter">
-             <span className="block text-cyan-200 font-mono text-xl md:text-3xl mb-1 opacity-80">WELCOME,</span>
-             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-violet-400 to-fuchsia-400 filter drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]">
-               {userName}
-             </span>
-           </h2>
-           <div className="relative mt-2">
-             <p className="text-lg md:text-2xl text-cyan-100 font-mono tracking-[0.2em] uppercase drop-shadow-lg border-l-4 border-cyan-500 pl-4 bg-black/30 backdrop-blur-sm rounded-r-lg pr-4 py-1">
-               TO OUR HUMBLE WORLD
-             </p>
-           </div>
-           
-           <div className={`mt-12 transition-opacity duration-1000 delay-500 ${showIntro ? 'opacity-80' : 'opacity-0'}`}>
-               <p className="flex items-center gap-3 text-gray-300 text-xs md:text-sm font-mono bg-black/60 px-4 py-2 rounded-full border border-gray-700/50">
-                 <span className="animate-pulse w-2 h-2 bg-cyan-400 rounded-full"></span>
-                 PRESS <span className="text-white font-bold">[RIGHT ARROW]</span> TO START JOURNEY
-               </p>
-           </div>
+          <div className="overflow-hidden">
+             <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.5)] hologram-text creative-enter">
+               HELLO, <br/>
+               <span className="text-cyan-400">{userName.toUpperCase()}</span>
+             </h1>
+          </div>
+          <p className="mt-4 text-xl md:text-2xl text-cyan-200/80 font-mono tracking-[0.2em] creative-enter" style={{ animationDelay: '0.2s' }}>
+             WELCOME TO OUR HUMBLE WORLD
+          </p>
+          
+          <div className="mt-8 flex items-center gap-4 creative-enter" style={{ animationDelay: '0.5s' }}>
+             <div className="w-12 h-[1px] bg-cyan-500"></div>
+             <p className="text-sm text-cyan-400 font-mono">INITIATE MOVEMENT SEQUENCE [RIGHT]</p>
+          </div>
         </div>
       )}
     </div>

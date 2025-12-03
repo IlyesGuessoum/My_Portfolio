@@ -1,3 +1,4 @@
+
 export enum GameState {
   PLAYING,
   MODAL_OPEN,
@@ -44,4 +45,15 @@ export interface InputState {
   right: boolean;
   jump: boolean; // Renamed from 'up' to match action name
   interact: boolean;
+}
+
+export interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number; // 0.0 to 1.0
+  size: number;
+  color: string;
 }

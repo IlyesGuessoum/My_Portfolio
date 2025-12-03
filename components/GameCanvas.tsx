@@ -1,5 +1,6 @@
+
 import React, { useRef, useEffect, useState } from 'react';
-import { PlayerState, InputState, Zone, GameState } from '../types';
+import { PlayerState, InputState, Zone, GameState, Particle } from '../types';
 import { 
   WORLD_WIDTH, 
   GRAVITY, 
@@ -9,7 +10,8 @@ import {
   JUMP_FORCE, 
   ZONES 
 } from '../constants';
-import { drawSky, drawMountains, drawCity, drawGround, drawPlayer, drawZoneObject, drawSpeechBubble } from '../utils/drawUtils';
+import { drawSky, drawMountains, drawCity, drawGround, drawPlayer, drawZoneObject, drawSpeechBubble, drawParticles } from '../utils/drawUtils';
+import { initAudio, playFootstepSound, playJumpSound } from '../utils/audioUtils';
 
 interface GameCanvasProps {
   onZoneEnter: (zone: Zone | null) => void;
@@ -20,6 +22,7 @@ interface GameCanvasProps {
   activeInputRef: React.MutableRefObject<InputState>;
   onUpdateProgress: (progress: number) => void;
   userName?: string;
+  audioMuted: boolean; // Added prop
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
@@ -29,7 +32,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   isMobile,
   activeInputRef,
   onUpdateProgress,
-  userName
+  userName,
+  audioMuted
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number | null>(null);
@@ -40,11 +44,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     player: PlayerState;
     cameraX: number;
     activeZone: Zone | null;
+    particles: Particle[];
+    lastOnGround: boolean;
+    lastStepTime: number; // For audio timing
   }>({
     player: { x: 100, y: 0, vx: 0, vy: 0, direction: 1, isMoving: false, isJumping: false },
     cameraX: 0,
     activeZone: null,
+    particles: [],
+    lastOnGround: false,
+    lastStepTime: 0,
   });
+
+  // Initialize audio on first user interaction (browser policy)
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+        initAudio();
+        window.removeEventListener('keydown', handleFirstInteraction);
+        window.removeEventListener('touchstart', handleFirstInteraction);
+        window.removeEventListener('click', handleFirstInteraction);
+    };
+
+    window.addEventListener('keydown', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction);
+    window.addEventListener('click', handleFirstInteraction);
+    return () => {
+        window.removeEventListener('keydown', handleFirstInteraction);
+        window.removeEventListener('touchstart', handleFirstInteraction);
+        window.removeEventListener('click', handleFirstInteraction);
+    };
+  }, []);
 
   const updatePhysics = (width: number, height: number) => {
     const s = stateRef.current;
@@ -53,6 +82,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Player Dimensions - Enlarged
     const PLAYER_WIDTH = 120;
     const PLAYER_HEIGHT = 160;
+    const GROUND_LEVEL_Y = height - (60 + PLAYER_HEIGHT);
     
     if (gameState === GameState.MODAL_OPEN) return;
 
@@ -73,22 +103,131 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (input.jump && !s.player.isJumping) {
       s.player.vy = JUMP_FORCE;
       s.player.isJumping = true;
+      playJumpSound(audioMuted); // Trigger Jump SFX
     }
 
     // Physics application
     s.player.vx *= FRICTION;
+    
+    // === FIX FOR SLIDING/CONTINUOUS SOUND ===
+    // Clamp velocity to 0 if it's very small. This prevents the physics
+    // from thinking the player is moving when they should be stopped.
+    if (Math.abs(s.player.vx) < 0.1) {
+        s.player.vx = 0;
+        s.player.isMoving = false; // Force stop state
+    }
+
     s.player.x += s.player.vx;
     s.player.y += s.player.vy;
     s.player.vy += GRAVITY;
 
     // Floor collision
-    // Ground block is 60px high.
-    const groundY = height - (60 + PLAYER_HEIGHT);
-    if (s.player.y > groundY) {
-      s.player.y = groundY;
+    let isOnGround = false;
+    if (s.player.y > GROUND_LEVEL_Y) {
+      s.player.y = GROUND_LEVEL_Y;
       s.player.vy = 0;
       s.player.isJumping = false;
+      isOnGround = true;
     }
+
+    // === AUDIO LOGIC ===
+    // Sound only plays when significantly moving (walking/running)
+    if (isOnGround && Math.abs(s.player.vx) > 2.0) {
+        const now = Date.now();
+        // Step interval depends on speed, roughly every 350ms
+        if (now - s.lastStepTime > 350) {
+            playFootstepSound(audioMuted);
+            s.lastStepTime = now;
+        }
+    }
+
+    // Particle Generation
+    // === LEGENDARY CYBER-RONIN EFFECTS ===
+    
+    if (isOnGround && Math.abs(s.player.vx) > 0.5) {
+        // SIGNIFICANTLY REDUCED FREQUENCY: Only 20% chance per frame
+        if (Math.random() > 0.8) {
+            const particleId = Date.now() + Math.random();
+            const centerX = s.player.x + PLAYER_WIDTH / 2;
+            
+            // Emit from the back foot position roughly
+            const emitX = centerX - (s.player.direction * 40);
+            
+            // Randomize particle type based on Ronin colors
+            const rand = Math.random();
+            let pColor, pSize, pLife, pVy;
+
+            if (rand > 0.9) {
+                // Legendary Gold Spark (Rare)
+                pColor = '#eab308';
+                pSize = Math.random() * 2 + 1; // Smaller: 1px to 3px
+                pLife = 0.5; // Short life
+                pVy = -(Math.random() * 2 + 1); // Shoots up
+            } else if (rand > 0.6) {
+                // Cyan Energy / Glitch (Uncommon)
+                pColor = '#22d3ee';
+                pSize = Math.random() * 2 + 1; // Smaller
+                pLife = 0.4; // Short life
+                pVy = -(Math.random() * 1.5);
+            } else {
+                // Dark Digital Smoke (Common)
+                pColor = '#334155';
+                pSize = Math.random() * 3 + 2; // Medium
+                pLife = 0.3; // Very short life
+                pVy = -(Math.random() * 0.5);
+            }
+
+            s.particles.push({
+                id: particleId,
+                x: emitX + (Math.random() * 20 - 10),
+                y: height - 60 - (Math.random() * 5), // Close to ground
+                vx: -s.player.direction * (Math.random() * 3 + 1), // Kicked back
+                vy: pVy,
+                life: pLife,
+                size: pSize,
+                color: pColor
+            });
+        }
+    }
+
+    // Landing Impact - Digital Shockwave
+    if (isOnGround && !s.lastOnGround) {
+        // Landing Sound
+        playFootstepSound(audioMuted); // Heavier impact
+        
+        // Reduced burst count
+        for (let i = 0; i < 8; i++) {
+            const isGold = Math.random() > 0.5;
+            s.particles.push({
+                id: Date.now() + i,
+                x: s.player.x + PLAYER_WIDTH / 2,
+                y: height - 60,
+                vx: (Math.random() - 0.5) * 10, 
+                vy: -(Math.random() * 3 + 1),
+                life: 0.6,
+                size: Math.random() * 3 + 1,
+                color: isGold ? '#eab308' : '#22d3ee'
+            });
+        }
+    }
+    s.lastOnGround = isOnGround;
+
+    // Update Particles
+    for (let i = s.particles.length - 1; i >= 0; i--) {
+        const p = s.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.04; // Faster fade out (was 0.03)
+        
+        // Drag effect on particles
+        p.vx *= 0.95;
+        p.vy += 0.1; // Slight gravity for particles
+
+        if (p.life <= 0) {
+            s.particles.splice(i, 1);
+        }
+    }
+
 
     // World bounds
     if (s.player.x < 0) {
@@ -160,6 +299,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     });
 
     drawGround(ctx, s.cameraX, width, height);
+    
+    // Draw Particles (With Additive Blending for Glow)
+    drawParticles(ctx, s.particles, s.cameraX);
 
     // Draw Player
     const playerScreenX = s.player.x - s.cameraX;
@@ -217,7 +359,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
         window.removeEventListener('resize', handleResize);
     };
-  }, [gameState, userName]); // Re-bind if important props change
+  }, [gameState, userName, audioMuted]); // Re-bind if important props change
 
   return (
     <canvas 

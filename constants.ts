@@ -26,34 +26,34 @@ export const ZONES: Zone[] = [
     width: 400,
     type: 'about',
     triggerText: 'ACCESS BIO-DATA [E]',
-    color: '#34D399'
+    color: '#22d3ee' 
   },
   {
     id: 'skills',
-    title: 'Skill Tree',
+    title: 'Neural Link',
     x: 4000,
     width: 400,
     type: 'skills',
-    triggerText: 'Press E to Inspect Skills',
-    color: '#F472B6'
+    triggerText: 'SYNC NEURAL NET [E]',
+    color: '#d946ef' // Fuchsia 500
   },
   {
     id: 'projects',
-    title: 'Project Gallery',
+    title: 'Holo-Gallery',
     x: 6500,
     width: 600,
     type: 'projects',
-    triggerText: 'Press E to View Projects',
-    color: '#FBBF24'
+    triggerText: 'ENTER HOLO-DECK [E]',
+    color: '#f59e0b' // Amber 500
   },
   {
     id: 'contact',
-    title: 'Contact Hub',
+    title: 'Uplink Station',
     x: 9000,
     width: 400,
     type: 'contact',
-    triggerText: 'Press E to Contact',
-    color: '#A78BFA'
+    triggerText: 'ESTABLISH UPLINK [E]',
+    color: '#8b5cf6' // Violet 500
   }
 ];
 
@@ -84,16 +84,16 @@ export const PROJECTS: Project[] = [
 
 export const SKILLS: SkillCategory[] = [
   {
-    category: 'Frontend',
+    category: 'Core_Systems',
     items: [
       { name: 'React/Next.js', level: 95 },
       { name: 'TypeScript', level: 90 },
       { name: 'Tailwind CSS', level: 95 },
-      { name: 'Three.js/Canvas', level: 75 }
+      { name: 'Three.js', level: 75 }
     ]
   },
   {
-    category: 'Backend',
+    category: 'Server_Side',
     items: [
       { name: 'Node.js', level: 85 },
       { name: 'PostgreSQL', level: 80 },
@@ -101,11 +101,11 @@ export const SKILLS: SkillCategory[] = [
     ]
   },
   {
-    category: 'Tools',
+    category: 'Dev_Ops',
     items: [
       { name: 'Git/GitHub', level: 90 },
       { name: 'Docker', level: 65 },
-      { name: 'Figma', level: 80 }
+      { name: 'CI/CD', level: 80 }
     ]
   }
 ];

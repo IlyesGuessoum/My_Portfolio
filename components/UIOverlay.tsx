@@ -64,33 +64,36 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
       {/* Interaction Prompt - Sci-Fi HUD Style */}
       {activeZone && (
-        <div className="absolute top-[20%] left-1/2 -translate-x-1/2 flex flex-col items-center z-50 animate-bounce">
-          <div className="relative group cursor-pointer">
-            {/* HUD Box */}
-            <div className="bg-black/80 backdrop-blur-md border border-cyan-500/50 px-8 py-4 rounded-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] relative overflow-hidden">
-                {/* Scanning line effect */}
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400/50 animate-[scan_2s_linear_infinite]"></div>
-                
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] text-cyan-500 font-mono tracking-[0.3em] uppercase opacity-70">System Alert</span>
-                    <div className="flex items-center gap-3">
-                        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
-                        <span className="text-xl font-bold text-white font-mono tracking-wider drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">
-                            {activeZone.triggerText || "INTERACT"}
-                        </span>
-                        <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+        // Position: Centered (top-1/2 left-1/2) then moved UP by 250px (-translate-y-[calc(50%+250px)])
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[calc(50%+250px)] z-50">
+          <div className="flex flex-col items-center animate-bounce">
+            <div className="relative group cursor-pointer">
+                {/* HUD Box */}
+                <div className="bg-black/80 backdrop-blur-md border border-cyan-500/50 px-8 py-4 rounded-lg shadow-[0_0_30px_rgba(34,211,238,0.3)] relative overflow-hidden">
+                    {/* Scanning line effect */}
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-cyan-400/50 animate-[scan_2s_linear_infinite]"></div>
+                    
+                    <div className="flex flex-col items-center gap-1">
+                        <span className="text-[10px] text-cyan-500 font-mono tracking-[0.3em] uppercase opacity-70">System Alert</span>
+                        <div className="flex items-center gap-3">
+                            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                            <span className="text-xl font-bold text-white font-mono tracking-wider drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">
+                                {activeZone.triggerText || "INTERACT"}
+                            </span>
+                            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+                        </div>
                     </div>
-                </div>
 
-                {/* Decorative corners */}
-                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-cyan-400"></div>
-                <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-cyan-400"></div>
-                <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-cyan-400"></div>
-                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-cyan-400"></div>
+                    {/* Decorative corners */}
+                    <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-cyan-400"></div>
+                    <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-cyan-400"></div>
+                    <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-cyan-400"></div>
+                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-cyan-400"></div>
+                </div>
+                
+                {/* Connector Line to character */}
+                <div className="w-[1px] h-12 bg-gradient-to-b from-cyan-500/50 to-transparent mx-auto mt-2"></div>
             </div>
-            
-            {/* Connector Line to character */}
-            <div className="w-[1px] h-12 bg-gradient-to-b from-cyan-500/50 to-transparent mx-auto mt-2"></div>
           </div>
         </div>
       )}
