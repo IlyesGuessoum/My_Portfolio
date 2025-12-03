@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>PixelWalker Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #111;
+        touch-action: none; /* Prevent pull-to-refresh on mobile */
+      }
+      canvas {
+        display: block;
+      }
+      /* Custom scrollbar for modals */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #6b7280;
+      }
+
+      /* Creative Text Animations */
+      
+      .creative-enter {
+        animation: creative-enter-anim 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      @keyframes creative-enter-anim {
+        0% { 
+          opacity: 0; 
+          transform: translateY(40px) scale(0.9); 
+          filter: blur(20px); 
+          letter-spacing: 10px;
+        }
+        100% { 
+          opacity: 1; 
+          transform: translateY(0) scale(1); 
+          filter: blur(0); 
+          letter-spacing: normal;
+        }
+      }
+
+      .creative-exit {
+        animation: creative-exit-anim 1.2s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+        pointer-events: none;
+      }
+
+      @keyframes creative-exit-anim {
+        0% { 
+          opacity: 1; 
+          transform: scale(1); 
+          filter: blur(0); 
+        }
+        100% { 
+          opacity: 0; 
+          transform: scale(1.5); 
+          filter: blur(30px); 
+          letter-spacing: 20px;
+        }
+      }
+
+      .hologram-text {
+        animation: hologram-flicker 5s infinite alternate;
+        position: relative;
+        display: inline-block;
+      }
+
+      @keyframes hologram-flicker {
+        0%, 100% { opacity: 1; text-shadow: 0 0 20px rgba(34,211,238,0.5); }
+        3% { opacity: 0.8; text-shadow: none; transform: translateX(-1px); }
+        6% { opacity: 1; text-shadow: 0 0 20px rgba(34,211,238,0.5); transform: translateX(0); }
+        7% { opacity: 1; transform: skewX(-10deg); }
+        8% { opacity: 1; transform: skewX(0deg); }
+        50% { text-shadow: 0 0 40px rgba(167,139,250,0.6); }
+      }
+      
+      @keyframes scan {
+        0% { top: 0; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
